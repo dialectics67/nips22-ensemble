@@ -1,4 +1,5 @@
 {
+    "base":{"_type":"uniform", "_value":[0,1000]},
     "w_0":{"_type":"loguniform", "_value":[0.000001,1000]},
     "w_1":{"_type":"loguniform", "_value":[0.000001,1000]},
     "w_2":{"_type":"loguniform", "_value":[0.000001,1000]},
@@ -11,7 +12,5 @@
     "w_9":{"_type":"loguniform", "_value":[0.000001,1000]},
     "w_10":{"_type":"loguniform", "_value":[0.000001,1000]},
     "w_11":{"_type":"loguniform", "_value":[0.000001,1000]},
-    "w_12":{"_type":"loguniform", "_value":[0.000001,1000]},
-    "w_13":{"_type":"loguniform", "_value":[0.000001,1000]},
-    "w_14":{"_type":"loguniform", "_value":[0.000001,1000]}
+    "w_12":{"_type":"loguniform", "_value":[0.000001,1000]}
 }

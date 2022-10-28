@@ -23,6 +23,7 @@ def _get_args():
 def aggregate_score_on_can(can, score_matrix):
     can_unique = -1 * np.ones_like(can, dtype=np.int64)
     score_matrix_unique = -1000000000000 * np.ones_like(score_matrix, dtype=np.float64)
+    can_count_matrix=np.zeros_like(can, dtype=np.int64)
     for i in range(can.shape[0]):
         unique_elements, unique_elements_index, unique_elements_count = np.unique(
             can[i, :], return_index=True, return_counts=True)
@@ -33,7 +34,8 @@ def aggregate_score_on_can(can, score_matrix):
         unique_elements_score = score_matrix[i, unique_elements_index]*unique_elements_count
         can_unique[i, 0:len(unique_elements)] = unique_elements
         score_matrix_unique[i, 0:len(unique_elements)] = unique_elements_score
-    return can_unique, score_matrix_unique
+        can_count_matrix[i, 0:len(unique_elements)]= unique_elements_count
+    return can_unique, score_matrix_unique, can_count_matrix
 
 
 def get_t_pred_top10(candidate, score_matrix_list, weight_list):
@@ -56,16 +58,16 @@ def normal_score_matrix(candidate, score_matrix):
 def preprocessed_can_score_matrix_list(candidate, score_matrix_list, param_list):
     # 将所有的score缩放到[0~1]
     st = time.time()
-    
     for i in range(len(score_matrix_list)):
         score_matrix_list[i], tmp = normal_score_matrix(candidate, score_matrix_list[i])
         param_list.append(tmp)
     # 合并相同节点的得分
     can_unique = None
+    can_count_matrix=None
     for i in range(len(score_matrix_list)):
-        can_unique, score_matrix_list[i] = aggregate_score_on_can(candidate, score_matrix_list[i])
+        can_unique, score_matrix_list[i], can_count_matrix = aggregate_score_on_can(candidate, score_matrix_list[i])
     print("processing use:", time.time() - st)
-    return can_unique, score_matrix_list, param_list
+    return can_unique, score_matrix_list, param_list, can_count_matrix
 
 
 def get_mrr(val_t, val_can, score_matrix_list, weight_tuple):
@@ -83,6 +85,10 @@ def get_test_submit_dict(candidate, test_score_matrix_list, weight_list):
     test_submit_dict['h,r->t'] = {'t_pred_top10': t_pred_top10}
     return test_submit_dict
 
+def apply_base(score_matrix_list,can_count_matrix,base):
+    for i in range(len(score_matrix_list)):
+        score_matrix_list[i]=score_matrix_list[i]+(can_count_matrix*base)
+    return score_matrix_list
 
 if __name__ == "__main__":
     # import pdb
@@ -95,16 +101,18 @@ if __name__ == "__main__":
         if not args.preprocess:
             params = nni.get_next_parameter()
         else:
-            params = {'w_0': 0.1, 'w_1':0.1, 'w_2': 0.1, 'w_3':0.1, 'w_4': 0.1, 'w_5':0.1, 'w_6': 0.1, 'w_7':0.1, 'w_8': 0.1, 'w_9':0.1, 'w_10': 0.1, 'w_11':0.1, 'w_12':0.1, 'w_13':0.1, 'w_14':0.1}
+            params = {'base': 0, 'w_0': 0.1, 'w_1':0.1, 'w_2': 0.1, 'w_3':0.1, 'w_4': 0.1, 'w_5':0.1, 'w_6': 0.1, 'w_7':0.1, 'w_8': 0.1, 'w_9':0.1, 'w_10': 0.1, 'w_11':0.1, 'w_12':0.1}
         # weight_search_range = []
-        num_models = 15
+        num_models = 13
         weight_tuples = []
-        for i in range(num_models):
+        for i in range(0,num_models):
             weight_tuples.append(params['w_'+str(i)])
         # args.weight_tuples = weight_tuples
         # get_mrr(args)
         vars(args)["weight_tuple"] = weight_tuples
+        vars(args)["base"] = params['base']
     else:
+        num_models=1
         vars(args)['nni'] = False
       
     # init weight_search_range
@@ -140,20 +148,24 @@ if __name__ == "__main__":
         save_path = args.save_path
         # import pdb
         # pdb.set_trace()
-        val_can, val_score_matrix_list, params_list = preprocessed_can_score_matrix_list(val_can, val_score_matrix_list, params_list)
+        # can_count_matrix unique candidate 相应位置的出现次数
+        val_can, val_score_matrix_list, params_list, can_count_matrix = preprocessed_can_score_matrix_list(val_can, val_score_matrix_list, params_list)
         if not os.path.exists(save_path):
             os.makedirs(save_path)
         np.save(os.path.join(save_path, 'val_can.npy'), val_can)
         np.save(os.path.join(save_path, 'val_t.npy'), val_t)
+        np.save(os.path.join(save_path, 'val_can_count_matrix.npy'), can_count_matrix)
         for i in range(len(val_score_matrix_list)): np.savez(os.path.join(save_path, 'model_'+str(i)+'_val_score_matrix_minmax.npz'), score_matrix=val_score_matrix_list[i], max=params_list[i][0], min=params_list[i][1])
     else:
         data_path = args.data_path
         val_can = np.load(os.path.join(data_path, 'val_can.npy'))
         val_t = np.load(os.path.join(data_path, 'val_t.npy'))
+        can_count_matrix=np.load(os.path.join(data_path, 'val_can_count_matrix.npy'))
         val_score_matrix_list = []
         for i in range(num_models):
             data = np.load(os.path.join(data_path, 'model_'+str(i)+'_val_score_matrix_minmax.npz'))['score_matrix']
             val_score_matrix_list.append(data)
+    val_score_matrix_list=apply_base(val_score_matrix_list,can_count_matrix,args.base)
     mrr = get_mrr(val_t, val_can, val_score_matrix_list, weight_tuple)
     print(mrr)
     if nni_searching:
