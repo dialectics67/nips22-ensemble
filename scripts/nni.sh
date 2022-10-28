@@ -1,0 +1,1 @@
+nnictl create --config config_v2.yaml --port 10087

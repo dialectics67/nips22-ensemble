@@ -1,0 +1,1 @@
+python python/dglke/strategy/grid_search_weight_M.py --num_proc 60 --num_per_proc 400 >> "grid_search.log"

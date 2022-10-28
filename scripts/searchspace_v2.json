@@ -1,0 +1,17 @@
+{
+    "w_0":{"_type":"loguniform", "_value":[0.000001,1000]},
+    "w_1":{"_type":"loguniform", "_value":[0.000001,1000]},
+    "w_2":{"_type":"loguniform", "_value":[0.000001,1000]},
+    "w_3":{"_type":"loguniform", "_value":[0.000001,1000]},
+    "w_4":{"_type":"loguniform", "_value":[0.000001,1000]},
+    "w_5":{"_type":"loguniform", "_value":[0.000001,1000]},
+    "w_6":{"_type":"loguniform", "_value":[0.000001,1000]},
+    "w_7":{"_type":"loguniform", "_value":[0.000001,1000]},
+    "w_8":{"_type":"loguniform", "_value":[0.000001,1000]},
+    "w_9":{"_type":"loguniform", "_value":[0.000001,1000]},
+    "w_10":{"_type":"loguniform", "_value":[0.000001,1000]},
+    "w_11":{"_type":"loguniform", "_value":[0.000001,1000]},
+    "w_12":{"_type":"loguniform", "_value":[0.000001,1000]},
+    "w_13":{"_type":"loguniform", "_value":[0.000001,1000]},
+    "w_14":{"_type":"loguniform", "_value":[0.000001,1000]}
+}
