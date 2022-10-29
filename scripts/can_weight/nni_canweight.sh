@@ -1,0 +1,1 @@
+nnictl create --config canweight_search.yaml --port 10087

@@ -1,0 +1,16 @@
+experimentName: canweight_ensemble
+searchSpaceFile: canweight_searchspace.json
+trialConcurrency: 10
+maxExperimentDuration: 24h
+maxTrialNumber: 1000
+tuner:
+  name: TPE
+  classArgs:
+    optimize_mode: maximize
+
+trialCommand:  python3 ../../code/get_mrr_canweight.py --nni --data_path '../canweight_smore_rule_7models/'  
+trialCodeDirectory: .
+
+trainingService:
+  platform: local
+  useActiveGpu: false
