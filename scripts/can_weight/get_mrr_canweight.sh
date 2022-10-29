@@ -1,4 +1,4 @@
-python3 ../code/get_mrr_canweight.py \
+python3 ../../code/get_mrr_canweight.py \
 --preprocess \
 --save_path '../../canweight_smore_rule_7models/' \
 --infer_rst_val_path_list  /data/xu/azure_storage/usscv100data/projects/nips22_ensemble/embeddingVec/autosf/AutoSF_wikikg90m-v2_shallow_d_768_g_50.0_lr_0.15_seed_0_4_mrr_0.1819125860929489_step_6874999/autosf_concat-complex_shallow-distmult_shallow-smore-autosf-complex_e-distmult_g-transe_l2-rule/valid_candidate_mrr_0.15483802556991577.pkl \
