@@ -197,7 +197,7 @@ if __name__ == "__main__":
         save_path = args.save_path
         
         val_can = val_can.astype(np.int32)
-        val_t = val_t.astype(np.int32)
+        val_t = val_t.numpy().astype(np.int32)
         val_score_matrix_list, params_list = preprocessed_can_score_matrix_list(val_can, val_score_matrix_list, params_list, args)
         
         # can的idx进行排序
