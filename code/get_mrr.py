@@ -12,6 +12,7 @@ def _get_args():
         return weight_tuple
     parser = argparse.ArgumentParser()
     parser.add_argument('--infer_rst_val_path_list', action='append')
+    parser.add_argument('--infer_rst_test_path_list', action='append')
     parser.add_argument('--save_path', default=None)
     parser.add_argument('--data_path', default=None)
     parser.add_argument('--preprocess', action='store_true')
@@ -48,18 +49,18 @@ def get_t_pred_top10(candidate, score_matrix_list, weight_list):
     return t_pred_top10
 
 
-def normal_score_matrix(candidate, score_matrix):
-    score_matrix_max = score_matrix[candidate != -1].max()
-    score_matrix_min = score_matrix[candidate != -1].min()
+def normal_score_matrix(candidate, score_matrix, second_candidate, second_score_matrix):
+    score_matrix_max = max(score_matrix[candidate != -1].max(),second_score_matrix[second_candidate!=-1].max())
+    score_matrix_min = min(score_matrix[candidate != -1].min(),second_score_matrix[second_candidate!=-1].min())
     score_matrix = (score_matrix-score_matrix_min)/(score_matrix_max-score_matrix_min)
     return score_matrix, (score_matrix_max, score_matrix_min)
 
 
-def preprocessed_can_score_matrix_list(candidate, score_matrix_list, param_list):
+def preprocessed_can_score_matrix_list(candidate, score_matrix_list, param_list, second_candidate, second_score_matrix_list):
     # 将所有的score缩放到[0~1]
     st = time.time()
     for i in range(len(score_matrix_list)):
-        score_matrix_list[i], tmp = normal_score_matrix(candidate, score_matrix_list[i])
+        score_matrix_list[i], tmp = normal_score_matrix(candidate, score_matrix_list[i], second_candidate, second_score_matrix_list[i])
         param_list.append(tmp)
     # 合并相同节点的得分
     can_unique = None
@@ -129,7 +130,6 @@ if __name__ == "__main__":
         print("val_can.shape", val_can.shape)
 
         val_score_matrix_list = []
-
         # get val_score_matrix_list
         for val_score_matrix_path in args.infer_rst_val_path_list:
             start = torch.load(val_score_matrix_path)
@@ -142,14 +142,27 @@ if __name__ == "__main__":
             val_score_matrix_list.append(start)
             print('valid score_matrix_path:', val_score_matrix_path, 'shpae:', start.shape)
         print('valid score matrix load done, matrix_num:', len(val_score_matrix_list))
-
+        # get test_score_matrix_list
+        test_can=torch.load(args.infer_rst_test_path_list[0])['t_candidate']
+        test_score_matrix_list = []
+        for test_score_matrix_path in args.infer_rst_test_path_list:
+            start = torch.load(test_score_matrix_path)
+            if 'h,r->t' in start:
+                start = start['h,r->t']['t_pred_score'].numpy()
+            else:
+                start = start['t_pred_score']
+                if type(start) != np.ndarray:
+                    start = start.numpy()
+            test_score_matrix_list.append(start)
+            print('valid score_matrix_path:', test_score_matrix_path, 'shpae:', start.shape)
+        print('test score matrix load done, matrix_num:', len(val_score_matrix_list))
         # preprocessed matrix
         params_list = []
         save_path = args.save_path
         # import pdb
         # pdb.set_trace()
         # can_count_matrix unique candidate 相应位置的出现次数
-        val_can, val_score_matrix_list, params_list, can_count_matrix = preprocessed_can_score_matrix_list(val_can, val_score_matrix_list, params_list)
+        val_can, val_score_matrix_list, params_list, can_count_matrix = preprocessed_can_score_matrix_list(val_can, val_score_matrix_list, params_list, test_can, test_score_matrix_list)
         if not os.path.exists(save_path):
             os.makedirs(save_path)
         np.save(os.path.join(save_path, 'val_can.npy'), val_can)
